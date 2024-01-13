@@ -1,5 +1,6 @@
 type Listener = () => void
 
+// 实现了一个发布订阅的基类
 export class Subscribable<TListener extends Function = Listener> {
   protected listeners: Set<TListener>
 

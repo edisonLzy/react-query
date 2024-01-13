@@ -51,6 +51,7 @@ interface MutationDefaults {
 
 // CLASS
 
+// The QueryClient can be used to interact with a cache
 export class QueryClient {
   #queryCache: QueryCache
   #mutationCache: MutationCache

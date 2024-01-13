@@ -7,10 +7,13 @@ import {
   useQueryClient,
   QueryClient,
   QueryClientProvider,
+  queryOptions
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
+
+// 如何设置
 
 function App() {
   const [postId, setPostId] = React.useState(-1)
@@ -32,13 +35,14 @@ function App() {
       ) : (
         <Posts setPostId={setPostId} />
       )}
-      <ReactQueryDevtools initialIsOpen />
+      {/* <ReactQueryDevtools initialIsOpen /> */}
     </QueryClientProvider>
   )
 }
 
 function usePosts() {
-  return useQuery({
+   return useQuery({
+    refetchInterval: 4000,
     queryKey: ['posts'],
     queryFn: async () => {
       const { data } = await axios.get(
@@ -136,4 +140,27 @@ function Post({ postId, setPostId }) {
 }
 
 const rootElement = document.getElementById('root')
-ReactDOM.createRoot(rootElement).render(<App />)
+const root = ReactDOM.createRoot(rootElement);
+
+root.render(<App />);
+
+window.unmount = ()=>{
+  root.unmount();
+};
+
+
+window.queryClient = queryClient;
+
+window.cancelPolling = ()=>{
+  queryOptions({
+    queryKey: ['posts'],
+    refetchInterval:0
+  })
+};
+
+
+window.restartPolling = ()=>{
+  queryClient.setQueryData(['posts'],v=>v, {
+    refetchInterval: 4000
+  });
+};

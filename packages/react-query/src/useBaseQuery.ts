@@ -86,6 +86,7 @@ export function useBaseQuery<
   React.useEffect(() => {
     // Do not notify on updates because of changes in the options because
     // these changes should already be reflected in the optimistic result.
+    // 只能通过 observer来 更新 options
     observer.setOptions(defaultedOptions, { listeners: false })
   }, [defaultedOptions, observer])
 

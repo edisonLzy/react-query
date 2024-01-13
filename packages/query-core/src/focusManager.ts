@@ -75,6 +75,7 @@ export class FocusManager extends Subscribable {
     }
 
     // document global can be unavailable in react native
+    // 判断当前页面是否可见
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return globalThis.document?.visibilityState !== 'hidden'
   }

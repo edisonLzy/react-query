@@ -2,7 +2,7 @@
 import * as React from 'react'
 import ReactDOM from 'react-dom/client'
 import axios from 'axios'
-import { useQuery, useQueryClient, QueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, QueryClient, queryOptions } from '@tanstack/react-query'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
@@ -43,7 +43,11 @@ function Posts({
   setPostId: React.Dispatch<React.SetStateAction<number>>
 }) {
   const queryClient = useQueryClient()
-  const { status, data, error, isFetching } = usePosts()
+  const { status, data, error, isFetching,isSuccess } = usePosts();
+
+  if(isSuccess){
+    data
+  }
 
   return (
     <div>

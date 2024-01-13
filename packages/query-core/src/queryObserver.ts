@@ -136,6 +136,7 @@ export class QueryObserver<
   destroy(): void {
     this.listeners = new Set()
     this.#clearStaleTimeout()
+    // clear setInterval
     this.#clearRefetchInterval()
     this.#currentQuery.removeObserver(this)
   }
@@ -204,7 +205,7 @@ export class QueryObserver<
     ) {
       this.#updateStaleTimeout()
     }
-
+    // 计算 interval 间隔
     const nextRefetchInterval = this.#computeRefetchInterval()
 
     // Update refetch interval if needed
@@ -379,7 +380,10 @@ export class QueryObserver<
     this.#clearRefetchInterval()
 
     this.#currentRefetchInterval = nextInterval
-
+    // 关闭 interval 的方式
+    // 1. 服务端渲染
+    // 2. 用户设置了 enabled 为 false
+    // 3. 用户设置无效的间隔, eg. refetchInterval <= 0
     if (
       isServer ||
       this.options.enabled === false ||

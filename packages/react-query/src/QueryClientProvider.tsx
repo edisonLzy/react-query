@@ -33,6 +33,7 @@ export const QueryClientProvider = ({
   React.useEffect(() => {
     client.mount()
     return () => {
+      // 组件卸载时，调用client.unmount()方法
       client.unmount()
     }
   }, [client])
