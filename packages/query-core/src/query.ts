@@ -200,6 +200,7 @@ export class Query<
     newData: TData,
     options?: SetDataOptions & { manual: boolean },
   ): TData {
+    // 基本原理: data 请求得到的数据
     const data = replaceData(this.state.data, newData, this.options)
 
     // Set data and mark it as cached
@@ -280,14 +281,14 @@ export class Query<
     // Continue fetch if currently paused
     this.#retryer?.continue()
   }
-
+  // 🚀 给 query 添加一个 observer
   addObserver(observer: QueryObserver<any, any, any, any, any>): void {
     if (!this.#observers.includes(observer)) {
       this.#observers.push(observer)
 
       // Stop the query from being garbage collected
       this.clearGcTimeout()
-
+      // 派发事件, flush queryCache中的 listeners
       this.#cache.notify({ type: 'observerAdded', query: this, observer })
     }
   }
@@ -328,6 +329,7 @@ export class Query<
     options?: QueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     fetchOptions?: FetchOptions,
   ): Promise<TData> {
+
     if (this.state.fetchStatus !== 'idle') {
       if (this.state.dataUpdatedAt && fetchOptions?.cancelRefetch) {
         // Silently cancel current fetch if the user wants to cancel refetches
@@ -377,6 +379,7 @@ export class Query<
       Object.defineProperty(object, 'signal', {
         enumerable: true,
         get: () => {
+          // 标记 signal 已经被消费
           this.#abortSignalConsumed = true
           return abortController.signal
         },
@@ -400,7 +403,7 @@ export class Query<
           this as unknown as Query,
         )
       }
-
+      // 🔥: 执行 queryFn
       return this.options.queryFn(
         queryFnContext as QueryFunctionContext<TQueryKey>,
       )
@@ -433,6 +436,7 @@ export class Query<
       this.state.fetchStatus === 'idle' ||
       this.state.fetchMeta !== context.fetchOptions?.meta
     ) {
+      // 基本原理: 设置 pending 状态
       this.#dispatch({ type: 'fetch', meta: context.fetchOptions?.meta })
     }
 
@@ -465,11 +469,12 @@ export class Query<
       this.isFetchingOptimistic = false
     }
 
-    // Try to fetch the data
+    // 基本原理: Try to fetch the data
     this.#retryer = createRetryer({
       fn: context.fetchFn as () => Promise<TData>,
       abort: abortController.abort.bind(abortController),
       onSuccess: (data) => {
+        // handle error response
         if (typeof data === 'undefined') {
           if (process.env.NODE_ENV !== 'production') {
             console.error(
@@ -479,7 +484,7 @@ export class Query<
           onError(new Error(`${this.queryHash} data is undefined`) as any)
           return
         }
-
+        // 基本原理: 🔥🔥 handle success response, 设置query实例的data
         this.setData(data)
 
         // Notify cache callback
@@ -552,8 +557,10 @@ export class Query<
             }),
           }
         case 'success':
+          // 基本原理: 请求成功时候的处理逻辑
           return {
             ...state,
+            // 基本原理: action.data就是请求得到的数据
             data: action.data,
             dataUpdateCount: state.dataUpdateCount + 1,
             dataUpdatedAt: action.dataUpdatedAt ?? Date.now(),
@@ -595,11 +602,12 @@ export class Query<
           }
       }
     }
-
+    // 基本原理: 🔥🔥 根据reducer 计算新的 query's state
     this.state = reducer(this.state)
-
+    // 通知 queryObserver
     notifyManager.batch(() => {
       this.#observers.forEach((observer) => {
+        // 🔥 基本原理: 通知 queryObserver,query中的state发生了变化
         observer.onQueryUpdate()
       })
 

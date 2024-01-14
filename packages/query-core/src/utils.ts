@@ -169,6 +169,7 @@ export function hashQueryKeyByOptions<TQueryKey extends QueryKey = QueryKey>(
   queryKey: TQueryKey,
   options?: QueryOptions<any, any, any, TQueryKey>,
 ): string {
+  // queryKeyHashFn: 自定义将 queryKey 转换为 queryHash 的函数
   const hashFn = options?.queryKeyHashFn || hashKey
   return hashFn(queryKey)
 }
@@ -311,6 +312,7 @@ export function scheduleMicrotask(callback: () => void) {
   sleep(0).then(callback)
 }
 
+// structuralSharing: 用于在更新数据的时候, 自定义更新策略
 export function replaceData<
   TData,
   TOptions extends QueryOptions<any, any, any, any>,

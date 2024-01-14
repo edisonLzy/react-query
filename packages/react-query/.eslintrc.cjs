@@ -1,5 +1,5 @@
 // @ts-check
-
+// cjs中 获取 eslint 类型信息
 /** @type {import('eslint').Linter.Config} */
 const config = {
   extends: ['plugin:react/recommended', 'plugin:react-hooks/recommended'],

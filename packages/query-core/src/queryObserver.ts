@@ -66,7 +66,7 @@ export class QueryObserver<
   #selectError: TError | null
   #selectFn?: (data: TQueryData) => TData
   #selectResult?: TData
-  // This property keeps track of the last query with defined data.
+// This property keeps track of the last query with defined data.
   // It will be used to pass the previous data and query to the placeholder function between renders.
   #lastQueryWithDefinedData?: Query<TQueryFnData, TError, TQueryData, TQueryKey>
   #staleTimeoutId?: ReturnType<typeof setTimeout>
@@ -77,7 +77,7 @@ export class QueryObserver<
   constructor(
     client: QueryClient,
     options: QueryObserverOptions<
-      TQueryFnData,
+      TQuerynData,
       TError,
       TData,
       TQueryData,
@@ -96,12 +96,14 @@ export class QueryObserver<
   protected bindMethods(): void {
     this.refetch = this.refetch.bind(this)
   }
-
+  // 基本原理: 调用 subscribe 的时候会触发 onSubscribe
   protected onSubscribe(): void {
     if (this.listeners.size === 1) {
+      // 基本原理: 给 query 添加 observer
       this.#currentQuery.addObserver(this)
 
       if (shouldFetchOnMount(this.#currentQuery, this.options)) {
+        // 初次渲染
         this.#executeFetch()
       } else {
         this.updateResult()
@@ -175,7 +177,7 @@ export class QueryObserver<
     if (!this.options.queryKey) {
       this.options.queryKey = prevOptions.queryKey
     }
-
+    // 基本原理: 根据 options 构建 query
     this.#updateQuery()
 
     const mounted = this.hasListeners()
@@ -228,6 +230,7 @@ export class QueryObserver<
       TQueryKey
     >,
   ): QueryObserverResult<TData, TError> {
+
     const query = this.#client.getQueryCache().build(this.#client, options)
 
     const result = this.createResult(query, options)
@@ -253,7 +256,8 @@ export class QueryObserver<
       this.#currentResultOptions = this.options
       this.#currentResultState = this.#currentQuery.state
     }
-    return result
+
+    return result;
   }
 
   getCurrentResult(): QueryObserverResult<TData, TError> {
@@ -328,13 +332,14 @@ export class QueryObserver<
     // Make sure we reference the latest query as the current one might have been removed
     this.#updateQuery()
 
-    // Fetch
+    // 基本原理: 调用 query的 fetch 方法,来获取 queryFn 的数据
     let promise: Promise<TQueryData | undefined> = this.#currentQuery.fetch(
       this.options as QueryOptions<TQueryFnData, TError, TQueryData, TQueryKey>,
       fetchOptions,
     )
 
     if (!fetchOptions?.throwOnError) {
+      // throwOnError: false; 意味着不需要对外抛出异常
       promise = promise.catch(noop)
     }
 
@@ -432,6 +437,7 @@ export class QueryObserver<
       TQueryKey
     >,
   ): QueryObserverResult<TData, TError> {
+    //
     const prevQuery = this.#currentQuery
     const prevOptions = this.options
     const prevResult = this.#currentResult as
@@ -443,7 +449,7 @@ export class QueryObserver<
     const queryInitialState = queryChange
       ? query.state
       : this.#currentQueryInitialState
-
+    //
     const { state } = query
     let { error, errorUpdatedAt, fetchStatus, status } = state
     let isPlaceholderData = false
@@ -494,6 +500,7 @@ export class QueryObserver<
     }
     // Use query data
     else {
+      // 基本原理: queryFn 的返回值
       data = state.data as unknown as TData
     }
 
@@ -583,15 +590,15 @@ export class QueryObserver<
       isStale: isStale(query, options),
       refetch: this.refetch,
     }
-
     return result as QueryObserverResult<TData, TError>
   }
-
+  // tip: good habit 如果函数没有返回值,则可以在声明位置使用 void 类型
   updateResult(notifyOptions?: NotifyOptions): void {
+    //
     const prevResult = this.#currentResult as
       | QueryObserverResult<TData, TError>
       | undefined
-
+    // 基本原理: 根据 query'state 来创建 result(useQuery的返回值)
     const nextResult = this.createResult(this.#currentQuery, this.options)
     this.#currentResultState = this.#currentQuery.state
     this.#currentResultOptions = this.options
@@ -646,13 +653,15 @@ export class QueryObserver<
     if (notifyOptions?.listeners !== false && shouldNotifyListeners()) {
       defaultNotifyOptions.listeners = true
     }
-
+    // 基本原理: 🔥 更新了currentResult之后,通知所有的订阅者更新(useSyncExternalStore's callback)
     this.#notify({ ...defaultNotifyOptions, ...notifyOptions })
   }
 
   #updateQuery(): void {
+
     const query = this.#client.getQueryCache().build(this.#client, this.options)
 
+    // 如果 queryHash,则对应的query也不会变化
     if (query === this.#currentQuery) {
       return
     }
@@ -669,6 +678,7 @@ export class QueryObserver<
     }
   }
 
+  // 基本原理: 🔥🔥🔥 当 query 的状态发生变化的时候,会触发该方法
   onQueryUpdate(): void {
     this.updateResult()
 
@@ -682,6 +692,7 @@ export class QueryObserver<
       // First, trigger the listeners
       if (notifyOptions.listeners) {
         this.listeners.forEach((listener) => {
+          // 🔥🔥: listener 就是 useSyncExternalStore 传递进来的callback, 从而触发 re-render
           listener(this.#currentResult)
         })
       }
@@ -695,6 +706,7 @@ export class QueryObserver<
   }
 }
 
+// 基本原理: 初始化渲染的时候理解请求的条件
 function shouldLoadOnMount(
   query: Query<any, any, any, any>,
   options: QueryObserverOptions<any, any, any, any>,

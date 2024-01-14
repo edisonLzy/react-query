@@ -94,7 +94,10 @@ export class QueryCache extends Subscribable<QueryCacheListener> {
 
   constructor(public config: QueryCacheConfig = {}) {
     super()
-    this.#queries = new Map<string, Query>()
+    //
+    type QueryHash = string
+    this.#queries = new Map<QueryHash, Query>()
+    //
   }
 
   build<TQueryFnData, TError, TData, TQueryKey extends QueryKey>(
@@ -102,11 +105,12 @@ export class QueryCache extends Subscribable<QueryCacheListener> {
     options: QueryOptions<TQueryFnData, TError, TData, TQueryKey>,
     state?: QueryState<TData, TError>,
   ): Query<TQueryFnData, TError, TData, TQueryKey> {
+    // 1.构建 queryHash
     const queryKey = options.queryKey!
     const queryHash =
       options.queryHash ?? hashQueryKeyByOptions(queryKey, options)
     let query = this.get<TQueryFnData, TError, TData, TQueryKey>(queryHash)
-
+    // 2. 如果没有 query, 则创建一个新的 query
     if (!query) {
       query = new Query({
         cache: this,

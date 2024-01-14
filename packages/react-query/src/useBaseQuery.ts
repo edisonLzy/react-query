@@ -14,6 +14,7 @@ import { ensureStaleTime, fetchOptimistic, shouldSuspend } from './suspense'
 import type { UseBaseQueryOptions } from './types'
 import type { QueryClient, QueryKey, QueryObserver } from '@tanstack/query-core'
 
+// 基本原理: 入口函数
 export function useBaseQuery<
   TQueryFnData,
   TError,
@@ -38,22 +39,23 @@ export function useBaseQuery<
       )
     }
   }
-
+  // 基本原理: 获取 queryClient
   const client = useQueryClient(queryClient)
+  //
   const isRestoring = useIsRestoring()
   const errorResetBoundary = useQueryErrorResetBoundary()
+  // 基本原理: 合并默认的 options
   const defaultedOptions = client.defaultQueryOptions(options)
 
   // Make sure results are optimistically set in fetching state before subscribing or updating options
   defaultedOptions._optimisticResults = isRestoring
     ? 'isRestoring'
     : 'optimistic'
-
   ensureStaleTime(defaultedOptions)
   ensurePreventErrorBoundaryRetry(defaultedOptions, errorResetBoundary)
-
   useClearResetErrorBoundary(errorResetBoundary)
 
+  // 基本原理: 每一个useQuery 都会对应一个 Observer(queryObserver) 实例
   const [observer] = React.useState(
     () =>
       new Observer<TQueryFnData, TError, TData, TQueryData, TQueryKey>(
@@ -61,12 +63,14 @@ export function useBaseQuery<
         defaultedOptions,
       ),
   )
-
+  // 获取 乐观的结果
   const result = observer.getOptimisticResult(defaultedOptions)
 
   React.useSyncExternalStore(
     React.useCallback(
       (onStoreChange) => {
+        // 基本原理: 当外部数据源发生变化的时候, 调用 onStoreChange 从而触发 组件re-render
+        // 1. 🔥 这里也说明了当 observer.currentResult 有变化的时候, 也会触发 re-render
         const unsubscribe = isRestoring
           ? () => undefined
           : observer.subscribe(notifyManager.batchCalls(onStoreChange))
@@ -113,6 +117,7 @@ export function useBaseQuery<
 
   // Handle result property usage tracking
   return !defaultedOptions.notifyOnChangeProps
+    // 基本原理: 返回 observer.trackResult(result)
     ? observer.trackResult(result)
     : result
 }

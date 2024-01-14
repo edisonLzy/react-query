@@ -42,9 +42,9 @@ function App() {
 
 function usePosts() {
    return useQuery({
-    refetchInterval: 4000,
     queryKey: ['posts'],
-    queryFn: async () => {
+    retry: false,
+    queryFn: async (queryKey,meta) => {
       const { data } = await axios.get(
         'https://jsonplaceholder.typicode.com/posts',
       )
